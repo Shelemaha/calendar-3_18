@@ -1,24 +1,28 @@
 <!doctype html>
-<html lang="ru">
+<html lang="uk">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Календарь смен 2/2 — 3 человека</title>
+  <title>Календар змін 2/2 — 3 працівники</title>
   <style>
     :root{
       --bg:#0b0f14;
       --card:#121826;
       --muted:#9ab0c8;
       --text:#e9f0f7;
-      --line:rgba(255,255,255,.10);
-      --w1:#6ea8ff; --w2:#62f0a8; --w3:#ffb45e;
-      --todayBorder:#ffffff;
+      --line:rgba(255,255,255,.12);
+
+      --c1:#6ea8ff; /* Працівник 1 */
+      --c2:#62f0a8; /* Працівник 2 */
+      --c3:#ffb45e; /* Працівник 3 */
+
       --radius:16px;
     }
+
     *{box-sizing:border-box}
     body{
       margin:0;
-      background: radial-gradient(1200px 700px at 20% 0%, rgba(110,168,255,.14), transparent 60%),
+      background: radial-gradient(1100px 700px at 20% 0%, rgba(110,168,255,.14), transparent 60%),
                   radial-gradient(900px 600px at 80% 20%, rgba(98,240,168,.12), transparent 55%),
                   radial-gradient(900px 600px at 80% 80%, rgba(255,180,94,.10), transparent 55%),
                   linear-gradient(180deg,#0b0f14,#070a0f);
@@ -29,15 +33,16 @@
     .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:18px;margin:0}
     .sub{font-size:13px;color:var(--muted);line-height:1.35}
+
     .card{
-      background: rgba(18,24,38,.85);
+      background: rgba(18,24,38,.86);
       border:1px solid var(--line);
       border-radius:var(--radius);
       padding:12px;
       backdrop-filter: blur(10px);
     }
     .grid{display:grid;grid-template-columns: 1fr; gap:12px}
-    @media(min-width:860px){ .grid{grid-template-columns: 340px 1fr; align-items:start;} }
+    @media(min-width:860px){ .grid{grid-template-columns: 360px 1fr; align-items:start;} }
 
     .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .btn{
@@ -53,13 +58,11 @@
     }
     .btn:hover{border-color:rgba(255,255,255,.22)}
     .btn.active{outline:2px solid rgba(255,255,255,.18); border-color:rgba(255,255,255,.25)}
+    .btn:disabled{opacity:.45; cursor:not-allowed}
     .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
 
     .nav{display:flex;gap:8px;align-items:center}
     .nav button{padding:10px 12px}
-
-    .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-    .legend span{display:flex;gap:6px;align-items:center}
 
     .month{
       display:grid;
@@ -71,15 +74,16 @@
     .day{
       border:1px solid var(--line);
       border-radius:14px;
-      min-height:82px;
+      min-height:84px;
       padding:10px;
       position:relative;
       background: rgba(255,255,255,.035);
       overflow:hidden;
     }
     .day.muted{opacity:.48}
+
     .day.today{
-      border:2px solid var(--todayBorder);
+      border:2px solid rgba(255,255,255,.9);
       background: rgba(255,255,255,.06);
     }
     .todayTag{
@@ -90,44 +94,68 @@
       background:#fff;
       padding:2px 8px;border-radius:999px;
     }
-
     .num{font-weight:900;font-size:14px}
-    .pairRow{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-    .pill{
-      padding:3px 10px;border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.18);
-      font-weight:900;
-      font-size:12px;
-      color: var(--text);
-    }
-    .pill.muted{opacity:.55}
 
-    /* ЧЁТКАЯ ПОДСВЕТКА рабочего дня выбранного сотрудника */
-    .workFocus{
-      position:absolute; inset:0;
+    /* ===== Анімаційне кільце (conic-gradient + обертання) ===== */
+    .ring{
+      position:absolute;
+      inset:7px;
+      border-radius:12px;
+      padding:3px;
       opacity:0;
       pointer-events:none;
-    }
-    .day.work .workFocus{opacity:1}
-    .workFocus.w1{ background: linear-gradient(180deg, rgba(110,168,255,.28), rgba(110,168,255,.06)); }
-    .workFocus.w2{ background: linear-gradient(180deg, rgba(98,240,168,.26), rgba(98,240,168,.06)); }
-    .workFocus.w3{ background: linear-gradient(180deg, rgba(255,180,94,.26), rgba(255,180,94,.06)); }
 
-    .workBorder{
-      position:absolute; left:0; top:0; bottom:0; width:5px;
-      opacity:0;
+      /* фон замінюємо динамічно в JS через style.background */
+      background: conic-gradient(from 0deg, rgba(255,255,255,.0), rgba(255,255,255,.0));
+      animation: spin 2.0s linear infinite;
+
+      /* вирізаємо середину, щоб лишився тільки "ободок" */
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
     }
-    .day.work .workBorder{opacity:1}
-    .workBorder.w1{background:var(--w1)}
-    .workBorder.w2{background:var(--w2)}
-    .workBorder.w3{background:var(--w3)}
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .day.hasRing .ring{opacity:1}
+
+    /* фолбек (якщо у когось не працює mask) — буде видима ліва смуга */
+    .bar{
+      position:absolute; left:0; top:0; bottom:0; width:5px;
+      opacity:0; pointer-events:none;
+      background: rgba(255,255,255,.0);
+    }
+    .day.hasRing .bar{opacity:1}
 
     .hint{font-size:13px;color:var(--muted);line-height:1.45}
-    .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
-    .kpi .box{border:1px solid var(--line);border-radius:14px;padding:10px;background:rgba(255,255,255,.03)}
-    .kpi .n{font-size:18px;font-weight:950}
-    .kpi .t{font-size:12px;color:var(--muted)}
+    .infoBlock{display:grid;gap:10px;margin-top:12px}
+    .infoCard{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      background:rgba(255,255,255,.03);
+    }
+    .infoTitle{display:flex;gap:8px;align-items:center;font-weight:950}
+    .infoRow{margin-top:6px;font-size:13px;color:var(--text)}
+    .infoRow small{color:var(--muted)}
+    .warn{
+      display:inline-block;
+      margin-left:6px;
+      font-size:11px;
+      font-weight:900;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      vertical-align:middle;
+    }
+    .warn.soon{
+      color:#0b0f14;
+      background:#fff;
+      border-color:#fff;
+    }
   </style>
 </head>
 
@@ -135,34 +163,36 @@
 <div class="wrap">
   <div class="top">
     <div>
-      <h1>Календарь смен 2/2 — 3 человека</h1>
+      <h1>Календар змін 2/2 — 3 працівники</h1>
       <div class="sub">
-        Нажми на работника — подсветятся его <b>рабочие</b> дни.
-        В каждой ячейке показан его график <b>358/323</b> (видно, когда происходит переход).
-        Якорь фиксированный: <b>15-е число выбранного месяца</b> = старт блока “1+2 (358)” на 2 дня.
+        Обери працівника — побачиш його робочі дні (анімаційне кільце).
+        Кнопка <b>«Напарник»</b> дозволяє додати другого працівника: кільце буде <b>50/50</b> двома кольорами в дні, коли вони працюють разом.
       </div>
     </div>
     <div class="nav">
-      <button class="btn" id="prev">← Месяц</button>
-      <button class="btn" id="next">Месяц →</button>
+      <button class="btn" id="prev">← Місяць</button>
+      <button class="btn" id="next">Місяць →</button>
     </div>
   </div>
 
   <div class="grid">
     <div class="card">
-      <div class="controls" id="people"></div>
-
-      <div class="kpi" id="kpi"></div>
-
-      <div style="height:12px"></div>
-      <div class="legend">
-        <span><i class="dot" style="background:var(--w1)"></i> Работник 1</span>
-        <span><i class="dot" style="background:var(--w2)"></i> Работник 2</span>
-        <span><i class="dot" style="background:var(--w3)"></i> Работник 3</span>
-      </div>
+      <div class="controls" id="primaryBtns"></div>
 
       <div style="height:10px"></div>
-      <div class="hint" id="todayInfo"></div>
+
+      <div class="controls">
+        <button class="btn" id="mateToggle" disabled>Напарник</button>
+      </div>
+
+      <div class="controls" id="mateBtns" style="display:none;margin-top:10px"></div>
+
+      <div class="infoBlock" id="info"></div>
+
+      <div style="height:10px"></div>
+      <div class="hint" id="hint">
+        Порада: якщо нікого не обрано — календар нейтральний. Обери працівника, щоб бачити підсвітку та підказки по графіку.
+      </div>
     </div>
 
     <div class="card">
@@ -173,112 +203,269 @@
 </div>
 
 <script>
+  // ===================== НАЛАШТУВАННЯ =====================
   const PEOPLE = [
-    { id: 1, name: "Работник 1", colorClass: "w1", cssVar: "--w1" },
-    { id: 2, name: "Работник 2", colorClass: "w2", cssVar: "--w2" },
-    { id: 3, name: "Работник 3", colorClass: "w3", cssVar: "--w3" },
+    { id: 1, name: "Працівник 1", color: "var(--c1)" },
+    { id: 2, name: "Працівник 2", color: "var(--c2)" },
+    { id: 3, name: "Працівник 3", color: "var(--c3)" },
   ];
 
-  // Пары по 2 дня (блоки): (1+2) -> (2+3) -> (1+3) -> повтор
-  const PAIRS = [[1,2],[2,3],[1,3]];
+  // Якір (початок циклу з твого прикладу):
+  // 15–16 січня 2026: 1 і 2 працюють на 358, 3 відпочиває на 323.
+  // Якщо колись зсувається — змінюєш тільки цю дату.
+  const ANCHOR = new Date(2026, 0, 15); // 2026-01-15 (місяці: 0=січень)
 
-  // 358/323 логика на уровне блоков:
-  // anchor-блок (15-16) считается "358 работает" и "323 отдыхает"
-  // значит:
-  // - если блок чётный: работать => 358, отдыхать => 323
-  // - если блок нечётный: работать => 323, отдыхать => 358
-  function graphLabel(isWorking, blockIndex){
-    const even = (blockIndex % 2 === 0);
-    if (isWorking) return even ? "358" : "323";
-    return even ? "323" : "358";
-  }
+  const INITIAL_ASSIGNMENT = { 1: "358", 2: "358", 3: "323" };
+  const SWITCH_ORDER = [2, 3, 1]; // в кінці кожного 2-денного блоку перемикається один: 2 -> 3 -> 1 -> повтор
 
+  // ===================== ДАТИ/ЧАС =====================
   function daysBetween(a, b){
     const utcA = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
     const utcB = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
     return Math.floor((utcB - utcA) / 86400000);
   }
 
-  function anchorForShownMonth(shown){
-    // ЯКОРЬ = 15-е число отображаемого месяца
-    return new Date(shown.getFullYear(), shown.getMonth(), 15);
+  function addDays(d, n){
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
   }
 
-  function blockIndexForDate(date, anchor){
-    const diff = daysBetween(anchor, date);
+  function blockIndexForDate(date){
+    const diff = daysBetween(ANCHOR, date);
     return Math.floor(diff / 2);
   }
 
-  function pairForDate(date, anchor){
-    const block = blockIndexForDate(date, anchor);
-    const idx = ((block % 3) + 3) % 3; // чтобы работало и "до" якоря
-    return PAIRS[idx];
+  function startOfBlock(blockIndex){
+    return addDays(ANCHOR, blockIndex * 2);
   }
 
-  function isWorking(personId, date, anchor){
-    return pairForDate(date, anchor).includes(personId);
+  function workingGraphForBlock(blockIndex){
+    // Блок 0 (15-16) працює графік 358, блок 1 — 323, блок 2 — 358, ...
+    return (blockIndex % 2 === 0) ? "358" : "323";
   }
 
-  // ===== UI =====
+  function toggleGraph(g){ return g === "358" ? "323" : "358"; }
+
+  // Отримати призначення графіків на початку певного блоку (може бути і від’ємний блок)
+  function assignmentAtBlock(targetBlock){
+    let a = { ...INITIAL_ASSIGNMENT };
+
+    if (targetBlock === 0) return a;
+
+    if (targetBlock > 0){
+      for (let b = 0; b < targetBlock; b++){
+        const sw = SWITCH_ORDER[((b % 3) + 3) % 3];
+        a[sw] = toggleGraph(a[sw]);
+      }
+      return a;
+    }
+
+    // targetBlock < 0: йдемо назад
+    // Щоб перейти від блоку (b-1) до b, в кінці (b-1) перемикається SWITCH_ORDER[(b-1) mod 3]
+    // Тому назад: починаємо з 0 і "відміняємо" перемикання
+    for (let b = -1; b >= targetBlock; b--){
+      const sw = SWITCH_ORDER[(((b % 3) + 3) % 3)]; // це sw для блоку b (бо вперед він перемикається в кінці блоку b)
+      // Відміна перемикання = те саме toggle (бо toggle — інволюція)
+      a[sw] = toggleGraph(a[sw]);
+    }
+    return a;
+  }
+
+  function graphOnDate(personId, date){
+    const bi = blockIndexForDate(date);
+    const a = assignmentAtBlock(bi);
+    return a[personId];
+  }
+
+  function isWorkingOnDate(personId, date){
+    const bi = blockIndexForDate(date);
+    return graphOnDate(personId, date) === workingGraphForBlock(bi);
+  }
+
+  // Наступна дата, коли працівник ПЕРЕЙДЕ на інший графік (перехід відбувається в кінці блоку, а діє з наступного блоку)
+  function nextSwitchDate(personId, fromDate){
+    const currentBlock = blockIndexForDate(fromDate);
+
+    // шукаємо найближчий блок b >= currentBlock, в кінці якого перемикається цей працівник
+    for (let b = currentBlock; b < currentBlock + 2000; b++){
+      const sw = SWITCH_ORDER[(((b % 3) + 3) % 3)];
+      if (sw === personId){
+        return startOfBlock(b + 1); // з наступного блоку
+      }
+    }
+    return null;
+  }
+
+  function fmtDateUA(d){
+    return d.toLocaleDateString("uk-UA", { day:"2-digit", month:"long", year:"numeric" });
+  }
+
+  function fmtMonthUA(d){
+    return d.toLocaleDateString("uk-UA", { month:"long", year:"numeric" });
+  }
+
+  // ===================== UI СТАН =====================
+  let shown = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let primary = null;   // основний працівник (id) або null
+  let mate = null;      // напарник (id) або null
+  let mateMode = false; // кнопка "Напарник" ON/OFF
+
   const calEl = document.getElementById("cal");
-  const peopleEl = document.getElementById("people");
   const monthTitleEl = document.getElementById("monthTitle");
-  const kpiEl = document.getElementById("kpi");
-  const todayInfoEl = document.getElementById("todayInfo");
+  const primaryBtnsEl = document.getElementById("primaryBtns");
+  const mateToggleEl = document.getElementById("mateToggle");
+  const mateBtnsEl = document.getElementById("mateBtns");
+  const infoEl = document.getElementById("info");
+  const hintEl = document.getElementById("hint");
 
-  let shown = new Date(); // текущий месяц
-  let activePerson = 1;   // для чёткости — один выбранный работник
+  function personById(id){ return PEOPLE.find(p => p.id === id); }
 
-  function fmtMonthTitle(d){
-    return d.toLocaleDateString("ru-RU", { year:"numeric", month:"long" }).replace(" г.", "");
+  function setPrimary(id){
+    if (primary === id){
+      // зняти вибір
+      primary = null;
+      mate = null;
+      mateMode = false;
+      mateToggleEl.classList.remove("active");
+      mateBtnsEl.style.display = "none";
+    } else {
+      primary = id;
+      if (mate === primary) mate = null;
+    }
+    renderAll();
   }
 
-  function renderPeople(){
-    peopleEl.innerHTML = "";
+  function toggleMateMode(){
+    if (!primary) return;
+    mateMode = !mateMode;
+    if (!mateMode) mate = null;
+    renderAll();
+  }
+
+  function setMate(id){
+    if (!primary) return;
+    if (id === primary) return;
+    mate = (mate === id) ? null : id;
+    renderAll();
+  }
+
+  function renderPrimaryButtons(){
+    primaryBtnsEl.innerHTML = "";
     PEOPLE.forEach(p => {
       const btn = document.createElement("button");
-      btn.className = "btn" + (activePerson === p.id ? " active" : "");
-      btn.innerHTML = `<span class="dot" style="background:var(${p.cssVar})"></span>${p.name}`;
-      btn.onclick = () => { activePerson = p.id; renderPeople(); renderCalendar(); };
-      peopleEl.appendChild(btn);
+      btn.className = "btn" + (primary === p.id ? " active" : "");
+      btn.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.name}`;
+      btn.onclick = () => setPrimary(p.id);
+      primaryBtnsEl.appendChild(btn);
     });
   }
 
-  function renderKpi(monthDate){
-    const anchor = anchorForShownMonth(monthDate);
-    const y = monthDate.getFullYear();
-    const m = monthDate.getMonth();
-    const daysInMonth = new Date(y, m+1, 0).getDate();
+  function renderMateUI(){
+    mateToggleEl.disabled = !primary;
+    mateToggleEl.classList.toggle("active", !!primary && mateMode);
 
-    let workDays = 0;
-    for(let d=1; d<=daysInMonth; d++){
-      const date = new Date(y,m,d);
-      if (isWorking(activePerson, date, anchor)) workDays++;
+    if (!primary || !mateMode){
+      mateBtnsEl.style.display = "none";
+      mateBtnsEl.innerHTML = "";
+      return;
     }
 
-    // Инфа "сегодня"
-    const today = new Date();
-    const todayAnchor = anchorForShownMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-    const todayPair = pairForDate(today, todayAnchor);
-    const todayBlock = blockIndexForDate(today, todayAnchor);
-    const todayIsWork = isWorking(activePerson, today, todayAnchor);
-    const todayGraph = graphLabel(todayIsWork, todayBlock);
+    mateBtnsEl.style.display = "flex";
+    mateBtnsEl.style.gap = "10px";
+    mateBtnsEl.style.flexWrap = "wrap";
 
-    kpiEl.innerHTML = `
-      <div class="box">
-        <div class="n">${workDays}</div>
-        <div class="t">Рабочих дней в ${fmtMonthTitle(monthDate)} для выбранного</div>
-      </div>
-      <div class="box">
-        <div class="n">${todayGraph}</div>
-        <div class="t">Сегодня у выбранного график (358/323)</div>
-      </div>
-    `;
-
-    todayInfoEl.innerHTML = `Сегодня работает пара: <b>${todayPair.join("+")}</b>. Для выбранного: <b>${todayIsWork ? "работает" : "выходной"}</b>.`;
+    mateBtnsEl.innerHTML = "";
+    PEOPLE.filter(p => p.id !== primary).forEach(p => {
+      const btn = document.createElement("button");
+      btn.className = "btn" + (mate === p.id ? " active" : "");
+      btn.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.name}`;
+      btn.onclick = () => setMate(p.id);
+      mateBtnsEl.appendChild(btn);
+    });
   }
 
-  function dayCell(date, muted, anchor){
+  mateToggleEl.onclick = toggleMateMode;
+
+  function ringGradientForDay(date){
+    // Повертає {bg, bar} або null (якщо не треба кільце)
+    if (!primary) return null;
+
+    const pWork = isWorkingOnDate(primary, date);
+    const mWork = mateMode && mate ? isWorkingOnDate(mate, date) : false;
+
+    if (!pWork && !mWork) return null;
+
+    // 1) Якщо є напарник і він працює в цей день — 50/50
+    if (mateMode && mate && pWork && mWork){
+      const cA = personById(primary).color;
+      const cB = personById(mate).color;
+      return {
+        bg: `conic-gradient(from 0deg, ${cA} 0 50%, ${cB} 50% 100%)`,
+        bar: `linear-gradient(180deg, ${cA} 0 50%, ${cB} 50% 100%)`
+      };
+    }
+
+    // 2) Інакше — 100% кольором того, хто працює
+    const who = pWork ? primary : mate;
+    const c = personById(who).color;
+    return {
+      bg: `conic-gradient(from 0deg, ${c} 0 100%)`,
+      bar: c
+    };
+  }
+
+  function renderInfo(){
+    infoEl.innerHTML = "";
+
+    if (!primary){
+      infoEl.innerHTML = `
+        <div class="infoCard">
+          <div class="infoTitle">Підказка</div>
+          <div class="infoRow"><small>Оберіть працівника, щоб бачити: графік сьогодні, дату наступного перемикання та скільки днів лишилось.</small></div>
+        </div>
+      `;
+      hintEl.textContent = "Нікого не обрано. Натисни на працівника, щоб увімкнути підсвітку та підказки.";
+      return;
+    }
+
+    hintEl.textContent = "Обрано працівника. Увімкни «Напарник», щоб додати другого й бачити 50/50 кільце в дні, коли вони разом на зміні.";
+
+    const today = new Date();
+    const selected = [primary];
+    if (mateMode && mate) selected.push(mate);
+
+    selected.forEach(id => {
+      const p = personById(id);
+      const works = isWorkingOnDate(id, today);
+      const graphToday = graphOnDate(id, today);
+
+      const ns = nextSwitchDate(id, today);
+      const daysLeft = ns ? daysBetween(today, ns) : null;
+
+      const warnClass = (daysLeft !== null && daysLeft <= 2) ? "warn soon" : "warn";
+      const warnText = (daysLeft !== null) ? `${daysLeft} дн.` : "—";
+
+      infoEl.insertAdjacentHTML("beforeend", `
+        <div class="infoCard">
+          <div class="infoTitle">
+            <span class="dot" style="background:${p.color}"></span>${p.name}
+          </div>
+          <div class="infoRow">
+            <b>Сьогодні:</b> ${works ? "Працює" : "Вихідний"}
+            <span class="${warnClass}">${fmtDateUA(today)}</span>
+          </div>
+          <div class="infoRow">
+            <b>Графік сьогодні:</b> ${graphToday}
+          </div>
+          <div class="infoRow">
+            <b>Наступне перемикання графіка:</b> ${ns ? fmtDateUA(ns) : "—"}
+            <span class="${warnClass}">залишилось: ${warnText}</span>
+          </div>
+        </div>
+      `);
+    });
+  }
+
+  function dayCell(date, muted){
     const el = document.createElement("div");
     el.className = "day" + (muted ? " muted" : "");
 
@@ -290,41 +477,26 @@
 
     if (isToday) el.classList.add("today");
 
-    const pair = pairForDate(date, anchor);
-    const block = blockIndexForDate(date, anchor);
+    const ring = ringGradientForDay(date);
+    if (ring) el.classList.add("hasRing");
 
-    const focusIsWork = isWorking(activePerson, date, anchor);
-    const focusGraph = graphLabel(focusIsWork, block);
-
-    if (focusIsWork) el.classList.add("work");
-
-    const p = PEOPLE.find(x=>x.id===activePerson);
+    const ringBg = ring ? ring.bg : "conic-gradient(from 0deg, rgba(255,255,255,0), rgba(255,255,255,0))";
+    const barBg  = ring ? ring.bar : "transparent";
 
     el.innerHTML = `
-      <div class="workFocus ${p.colorClass}"></div>
-      <div class="workBorder ${p.colorClass}"></div>
-      ${isToday ? `<div class="todayTag">СЕГОДНЯ</div>` : ``}
+      <div class="ring" style="background:${ringBg}"></div>
+      <div class="bar" style="background:${barBg}"></div>
+      ${isToday ? `<div class="todayTag">СЬОГОДНІ</div>` : ``}
       <div class="num">${date.getDate()}</div>
-
-      <div class="pairRow">
-        <span class="pill">${pair.join("+")}</span>
-        <span class="pill ${focusIsWork ? "" : "muted"}" style="border-color:rgba(255,255,255,.18)">
-          ${focusGraph}${focusIsWork ? "" : " (вых)"}
-        </span>
-      </div>
     `;
     return el;
   }
 
   function renderCalendar(){
-    const anchor = anchorForShownMonth(shown);
-    const y = shown.getFullYear();
-    const m = shown.getMonth();
-
-    monthTitleEl.textContent = `Месяц: ${fmtMonthTitle(shown)} (якорь: 15-е)`;
+    monthTitleEl.textContent = `Місяць: ${fmtMonthUA(shown)}`;
 
     calEl.innerHTML = "";
-    const dows = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+    const dows = ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"];
     dows.forEach(x=>{
       const el = document.createElement("div");
       el.className = "dow";
@@ -332,44 +504,54 @@
       calEl.appendChild(el);
     });
 
+    const y = shown.getFullYear();
+    const m = shown.getMonth();
+
     const first = new Date(y, m, 1);
-    const startDow = (first.getDay() + 6) % 7; // Пн=0...Вс=6
+    const startDow = (first.getDay() + 6) % 7; // Пн=0...Нд=6
     const daysInMonth = new Date(y, m+1, 0).getDate();
     const daysInPrev = new Date(y, m, 0).getDate();
 
-    // хвост прошлого месяца
+    // хвіст попереднього місяця
     for(let i=0;i<startDow;i++){
       const d = daysInPrev - startDow + 1 + i;
       const date = new Date(y, m-1, d);
-      calEl.appendChild(dayCell(date, true, anchor));
+      calEl.appendChild(dayCell(date, true));
     }
-    // текущий месяц
+    // поточний місяць
     for(let d=1; d<=daysInMonth; d++){
       const date = new Date(y, m, d);
-      calEl.appendChild(dayCell(date, false, anchor));
+      calEl.appendChild(dayCell(date, false));
     }
-    // добиваем до полного ряда
-    const totalCells = 7 + startDow + daysInMonth; // включая DOW
+    // добиваємо до повного ряду
+    const totalCells = 7 + startDow + daysInMonth; // включно з DOW
     const after = (Math.ceil(totalCells/7)*7) - totalCells;
     for(let i=1;i<=after;i++){
       const date = new Date(y, m+1, i);
-      calEl.appendChild(dayCell(date, true, anchor));
+      calEl.appendChild(dayCell(date, true));
     }
-
-    renderKpi(shown);
   }
 
   document.getElementById("prev").onclick = () => {
     shown = new Date(shown.getFullYear(), shown.getMonth()-1, 1);
-    renderCalendar();
+    renderAll();
   };
   document.getElementById("next").onclick = () => {
     shown = new Date(shown.getFullYear(), shown.getMonth()+1, 1);
-    renderCalendar();
+    renderAll();
   };
 
-  renderPeople();
-  renderCalendar();
+  function renderAll(){
+    renderPrimaryButtons();
+    renderMateUI();
+    renderInfo();
+    renderCalendar();
+  }
+
+  renderAll();
+
+  // Якщо хочеш, щоб "СЬОГОДНІ" переключалось в північ без перезавантаження — розкоментуй:
+  // setInterval(renderAll, 60 * 1000);
 </script>
 </body>
 </html>
