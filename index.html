@@ -6,15 +6,13 @@
   <title>Календар змін 2/2 — 3 інженери</title>
   <style>
     :root{
-      --bg:#0b0f14;
-      --card:#121826;
-      --muted:#9ab0c8;
       --text:#e9f0f7;
+      --muted:#9ab0c8;
       --line:rgba(255,255,255,.12);
 
-      --c1:#6ea8ff; /* Інженер 1 */
-      --c2:#62f0a8; /* Інженер 2 */
-      --c3:#ffb45e; /* Інженер 3 */
+      --c1:#6ea8ff; --c1f:rgba(110,168,255,.22);
+      --c2:#62f0a8; --c2f:rgba(98,240,168,.20);
+      --c3:#ffb45e; --c3f:rgba(255,180,94,.20);
 
       --radius:16px;
     }
@@ -22,13 +20,14 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      background: radial-gradient(1100px 700px at 20% 0%, rgba(110,168,255,.14), transparent 60%),
-                  radial-gradient(900px 600px at 80% 20%, rgba(98,240,168,.12), transparent 55%),
-                  radial-gradient(900px 600px at 80% 80%, rgba(255,180,94,.10), transparent 55%),
+      background: radial-gradient(1100px 700px at 20% 0%, rgba(110,168,255,.12), transparent 60%),
+                  radial-gradient(900px 600px at 80% 20%, rgba(98,240,168,.10), transparent 55%),
+                  radial-gradient(900px 600px at 80% 80%, rgba(255,180,94,.08), transparent 55%),
                   linear-gradient(180deg,#0b0f14,#070a0f);
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
+
     .wrap{max-width:1100px;margin:0 auto;padding:16px}
     .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
     h1{font-size:18px;margin:0}
@@ -41,6 +40,7 @@
       padding:12px;
       backdrop-filter: blur(10px);
     }
+
     .grid{display:grid;grid-template-columns: 1fr; gap:12px}
     @media(min-width:860px){ .grid{grid-template-columns: 380px 1fr; align-items:start;} }
 
@@ -59,16 +59,13 @@
     .btn:hover{border-color:rgba(255,255,255,.22)}
     .btn.active{outline:2px solid rgba(255,255,255,.18); border-color:rgba(255,255,255,.25)}
     .btn:disabled{opacity:.45; cursor:not-allowed}
+
     .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
 
     .nav{display:flex;gap:8px;align-items:center}
     .nav button{padding:10px 12px}
 
-    .month{
-      display:grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap:10px;
-    }
+    .month{display:grid;grid-template-columns: repeat(7, 1fr);gap:10px;}
     .dow{font-size:12px;color:var(--muted);text-align:center;padding:6px 0}
 
     .day{
@@ -77,22 +74,11 @@
       min-height:86px;
       padding:10px;
       position:relative;
-      background: rgba(255,255,255,.035);
-      overflow:visible; /* важливо: щоб "змійка" була зовні */
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
     }
     .day.muted{opacity:.48}
-
-    .dayInner{
-      position:relative;
-      border-radius:14px;
-      overflow:hidden;
-      min-height:86px;
-      padding:10px;
-      background: rgba(255,255,255,.035);
-      border:1px solid rgba(255,255,255,.00);
-    }
-
-    .day.today .dayInner{
+    .day.today{
       border:2px solid rgba(255,255,255,.92);
       background: rgba(255,255,255,.06);
     }
@@ -103,71 +89,42 @@
       color:#0b0f14;
       background:#fff;
       padding:2px 8px;border-radius:999px;
-      z-index:3;
     }
-    .num{font-weight:900;font-size:14px;z-index:2;position:relative}
 
-    /* ===== "ЗМІЙКА" НАВКОЛО КЛІТИНКИ (ЗОВНІ) ===== */
-    .snake{
-      position:absolute;
-      inset:-4px;            /* виходимо назовні */
-      border-radius:18px;
-      padding:3px;           /* товщина рамки */
+    .num{font-weight:900;font-size:14px}
+
+    /* Заливка для основного інженера (його робочі дні) */
+    .fill{
+      position:absolute; inset:0;
       opacity:0;
       pointer-events:none;
-      z-index:1;
-
-      /* background задаємо через JS */
-      background: conic-gradient(from 0deg, transparent, transparent);
-
-      /* робимо рамку (порожня середина) */
-      -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-
-      animation: spin 1.5s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .day.primaryWork .fill{opacity:1}
 
-    .day.hasSnake .snake{opacity:1}
-
-    /* Фолбек (на випадок якщо маска не спрацює): тонка смуга зліва */
-    .bar{
-      position:absolute; left:-4px; top:-4px; bottom:-4px; width:5px;
-      border-radius:12px;
+    /* Полоска зліва для напарника (коли він працює) */
+    .mateStripe{
+      position:absolute; left:0; top:0; bottom:0; width:6px;
       opacity:0;
       pointer-events:none;
-      z-index:1;
-      background: transparent;
     }
-    .day.hasSnake .bar{opacity:1}
+    .day.mateWork .mateStripe{opacity:1}
 
-    /* ===== бейджики графіка ===== */
-    .badges{
+    /* Кружок для графіка 358/323 */
+    .gBadge{
       position:absolute;
       left:10px;
       bottom:10px;
-      display:flex;
-      gap:6px;
-      z-index:3;
-    }
-    .badge{
-      font-size:11px;
-      font-weight:950;
-      padding:2px 8px;
+      width:32px;height:32px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.22);
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:950;
+      border:1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.28);
       color: var(--text);
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
     }
-    .badge .miniDot{width:8px;height:8px;border-radius:999px;display:inline-block}
 
-    .hint{font-size:13px;color:var(--muted);line-height:1.45}
+    .hint{font-size:13px;color:var(--muted);line-height:1.35}
+
     .infoBlock{display:grid;gap:10px;margin-top:12px}
     .infoCard{
       border:1px solid var(--line);
@@ -176,8 +133,7 @@
       background:rgba(255,255,255,.03);
     }
     .infoTitle{display:flex;gap:8px;align-items:center;font-weight:950}
-    .infoRow{margin-top:6px;font-size:13px;color:var(--text)}
-    .infoRow small{color:var(--muted)}
+    .infoRow{margin-top:6px;font-size:13px}
     .warn{
       display:inline-block;
       margin-left:6px;
@@ -196,19 +152,14 @@
       border-color:#fff;
     }
 
-    /* Перемикач графіків */
-    .splitRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px}
-    .select{
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.15);
-      color: var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      font-weight:800;
-      cursor:pointer;
-      outline:none;
+    .sectionTitle{
+      margin-top:12px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase;
     }
-    .label{font-size:12px;color:var(--muted);margin-top:10px}
   </style>
 </head>
 
@@ -217,10 +168,7 @@
   <div class="top">
     <div>
       <h1>Календар змін 2/2 — 3 інженери</h1>
-      <div class="sub">
-        Обери інженера — побачиш його робочі дні з анімацією <b>«змійка навколо дати»</b>.
-        Кнопка <b>«Напарник»</b> додає другого інженера: у спільні робочі дні рамка буде <b>50/50</b> двома кольорами й крутитиметься.
-      </div>
+      <div class="sub">Обери інженера. Напарник — смуга зліва. Графіки — кружок у даті.</div>
     </div>
     <div class="nav">
       <button class="btn" id="prev">← Місяць</button>
@@ -230,29 +178,23 @@
 
   <div class="grid">
     <div class="card">
+      <div class="sectionTitle">Інженер</div>
       <div class="controls" id="primaryBtns"></div>
 
-      <div class="splitRow">
+      <div style="height:10px"></div>
+
+      <div class="controls">
         <button class="btn" id="mateToggle" disabled>Напарник</button>
-
-        <button class="btn" id="showGraphsBtn" disabled>Показувати графіки</button>
-
-        <select class="select" id="graphFilter" disabled>
-          <option value="all">Усі</option>
-          <option value="358">Лише 358</option>
-          <option value="323">Лише 323</option>
-          <option value="none">Жодні</option>
-        </select>
       </div>
-
       <div class="controls" id="mateBtns" style="display:none;margin-top:10px"></div>
+
+      <div class="sectionTitle">Графіки</div>
+      <div class="controls" id="graphBtns"></div>
 
       <div class="infoBlock" id="info"></div>
 
       <div style="height:10px"></div>
-      <div class="hint" id="hint">
-        Порада: якщо нікого не обрано — календар нейтральний. Обери інженера, щоб бачити підсвітку та підказки.
-      </div>
+      <div class="hint" id="hint">Нікого не обрано.</div>
     </div>
 
     <div class="card">
@@ -263,14 +205,17 @@
 </div>
 
 <script>
-  // ===================== НАЛАШТУВАННЯ =====================
+  // ===== Інженери =====
   const PEOPLE = [
-    { id: 1, name: "Інженер 1", color: "var(--c1)" },
-    { id: 2, name: "Інженер 2", color: "var(--c2)" },
-    { id: 3, name: "Інженер 3", color: "var(--c3)" },
+    { id: 1, name: "Інженер 1", color: "var(--c1)", fill: "var(--c1f)" },
+    { id: 2, name: "Інженер 2", color: "var(--c2)", fill: "var(--c2f)" },
+    { id: 3, name: "Інженер 3", color: "var(--c3)", fill: "var(--c3f)" },
   ];
 
-  // Якір (з твого прикладу): 15–16.01.2026
+  // ===== Графіки =====
+  const GRAPHS = ["358","323"];
+
+  // Якір: 15–16.01.2026 як у твоєму прикладі
   const ANCHOR = new Date(2026, 0, 15);
 
   // Початкові графіки на старті якоря
@@ -279,7 +224,7 @@
   // В кінці кожного 2-денного блоку перемикається один інженер: 2 -> 3 -> 1 -> повтор
   const SWITCH_ORDER = [2, 3, 1];
 
-  // ===================== ДАТИ =====================
+  // ===== Дати/логіка =====
   function daysBetween(a, b){
     const utcA = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
     const utcB = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
@@ -294,7 +239,6 @@
   function workingGraphForBlock(blockIndex){ return (blockIndex % 2 === 0) ? "358" : "323"; }
   function toggleGraph(g){ return g === "358" ? "323" : "358"; }
 
-  // призначення графіків на початку блоку
   function assignmentAtBlock(targetBlock){
     let a = { ...INITIAL_ASSIGNMENT };
     if (targetBlock === 0) return a;
@@ -307,7 +251,6 @@
       return a;
     }
 
-    // назад
     for (let b = -1; b >= targetBlock; b--){
       const sw = SWITCH_ORDER[(((b % 3) + 3) % 3)];
       a[sw] = toggleGraph(a[sw]);
@@ -320,12 +263,12 @@
     const a = assignmentAtBlock(bi);
     return a[personId];
   }
+
   function isWorkingOnDate(personId, date){
     const bi = blockIndexForDate(date);
     return graphOnDate(personId, date) === workingGraphForBlock(bi);
   }
 
-  // наступна дата, коли інженер ПЕРЕЙДЕ на інший графік
   function nextSwitchDate(personId, fromDate){
     const currentBlock = blockIndexForDate(fromDate);
     for (let b = currentBlock; b < currentBlock + 2000; b++){
@@ -342,14 +285,13 @@
     return d.toLocaleDateString("uk-UA", { month:"long", year:"numeric" });
   }
 
-  // ===================== UI СТАН =====================
+  // ===== UI стан =====
   let shown = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   let primary = null;
   let mate = null;
   let mateMode = false;
 
-  let showGraphs = false;
-  let graphFilter = "all"; // all | 358 | 323 | none
+  const selectedGraphs = new Set(); // "358", "323"
 
   const calEl = document.getElementById("cal");
   const monthTitleEl = document.getElementById("monthTitle");
@@ -358,8 +300,7 @@
   const mateBtnsEl = document.getElementById("mateBtns");
   const infoEl = document.getElementById("info");
   const hintEl = document.getElementById("hint");
-  const showGraphsBtnEl = document.getElementById("showGraphsBtn");
-  const graphFilterEl = document.getElementById("graphFilter");
+  const graphBtnsEl = document.getElementById("graphBtns");
 
   function personById(id){ return PEOPLE.find(p => p.id === id); }
 
@@ -370,9 +311,6 @@
       mateMode = false;
       mateToggleEl.classList.remove("active");
       mateBtnsEl.style.display = "none";
-
-      showGraphs = false;
-      showGraphsBtnEl.classList.remove("active");
     } else {
       primary = id;
       if (mate === primary) mate = null;
@@ -394,17 +332,13 @@
     renderAll();
   }
 
-  function toggleShowGraphs(){
-    if (!primary) return;
-    showGraphs = !showGraphs;
-    showGraphsBtnEl.classList.toggle("active", showGraphs);
+  function toggleGraphPick(g){
+    if (selectedGraphs.has(g)) selectedGraphs.delete(g);
+    else selectedGraphs.add(g);
     renderAll();
   }
 
-  mateToggleEl.onclick = toggleMateMode;
-  showGraphsBtnEl.onclick = toggleShowGraphs;
-  graphFilterEl.onchange = (e) => { graphFilter = e.target.value; renderAll(); };
-
+  // ===== Render кнопок =====
   function renderPrimaryButtons(){
     primaryBtnsEl.innerHTML = "";
     PEOPLE.forEach(p => {
@@ -419,9 +353,6 @@
   function renderMateUI(){
     mateToggleEl.disabled = !primary;
     mateToggleEl.classList.toggle("active", !!primary && mateMode);
-
-    showGraphsBtnEl.disabled = !primary;
-    graphFilterEl.disabled = !primary;
 
     if (!primary || !mateMode){
       mateBtnsEl.style.display = "none";
@@ -443,102 +374,65 @@
     });
   }
 
-  // ===== ГРАДІЄНТ РАМКИ =====
-  function snakeGradient(color){
-    // "змійка": більшість прозора, маленька "голова" + короткий "хвіст"
-    // можна підкрутити відсотки під смак
-    return `conic-gradient(
-      from 0deg,
-      transparent 0 72%,
-      ${color} 72% 84%,
-      rgba(255,255,255,0) 84% 100%
-    )`;
+  function renderGraphButtons(){
+    graphBtnsEl.innerHTML = "";
+    GRAPHS.forEach(g => {
+      const btn = document.createElement("button");
+      btn.className = "btn" + (selectedGraphs.has(g) ? " active" : "");
+      btn.textContent = g;
+      btn.onclick = () => toggleGraphPick(g);
+      graphBtnsEl.appendChild(btn);
+    });
   }
 
-  function halfHalfGradient(colorA, colorB){
-    // 50/50 півкола двома кольорами
-    return `conic-gradient(from 0deg, ${colorA} 0 50%, ${colorB} 50% 100%)`;
-  }
-
-  function ringForDay(date){
-    // повертає {bg, barColor} або null
-    if (!primary) return null;
-
-    const pWork = isWorkingOnDate(primary, date);
-    const mWork = mateMode && mate ? isWorkingOnDate(mate, date) : false;
-
-    if (!pWork && !mWork) return null;
-
-    // Якщо обидва працюють — 50/50
-    if (mateMode && mate && pWork && mWork){
-      const cA = personById(primary).color;
-      const cB = personById(mate).color;
-      return { bg: halfHalfGradient(cA, cB), barColor: `linear-gradient(180deg, ${cA} 0 50%, ${cB} 50% 100%)` };
-    }
-
-    // Інакше — "змійка" кольором того, хто працює
-    const who = pWork ? primary : mate;
-    const c = personById(who).color;
-    return { bg: snakeGradient(c), barColor: c };
-  }
-
-  function shouldShowGraphLabel(g){
-    if (!showGraphs) return false;
-    if (graphFilter === "none") return false;
-    if (graphFilter === "all") return true;
-    return g === graphFilter;
-  }
-
+  // ===== Інфо =====
   function renderInfo(){
     infoEl.innerHTML = "";
 
     if (!primary){
-      infoEl.innerHTML = `
-        <div class="infoCard">
-          <div class="infoTitle">Підказка</div>
-          <div class="infoRow"><small>Оберіть інженера, щоб бачити: графік сьогодні, дату наступного перемикання та скільки днів лишилось.</small></div>
-        </div>
-      `;
-      hintEl.textContent = "Нікого не обрано. Натисни на інженера, щоб увімкнути підсвітку та підказки.";
+      hintEl.textContent = "Нікого не обрано.";
       return;
     }
 
-    hintEl.textContent = "Обрано інженера. Увімкни «Напарник», щоб додати другого й бачити 50/50 рамку в спільні робочі дні.";
+    hintEl.textContent = mateMode ? "Є інженер + напарник." : "Обрано інженера.";
 
     const today = new Date();
-    const selected = [primary];
-    if (mateMode && mate) selected.push(mate);
 
-    selected.forEach(id => {
+    const list = [primary];
+    if (mateMode && mate) list.push(mate);
+
+    list.forEach(id => {
       const p = personById(id);
       const works = isWorkingOnDate(id, today);
-      const graphToday = graphOnDate(id, today);
+      const gToday = graphOnDate(id, today);
 
       const ns = nextSwitchDate(id, today);
-      const daysLeft = ns ? daysBetween(today, ns) : null;
+      const left = ns ? daysBetween(today, ns) : null;
 
-      const warnClass = (daysLeft !== null && daysLeft <= 2) ? "warn soon" : "warn";
-      const warnText = (daysLeft !== null) ? `${daysLeft} дн.` : "—";
+      const warnClass = (left !== null && left <= 2) ? "warn soon" : "warn";
 
       infoEl.insertAdjacentHTML("beforeend", `
         <div class="infoCard">
           <div class="infoTitle">
             <span class="dot" style="background:${p.color}"></span>${p.name}
           </div>
-          <div class="infoRow">
-            <b>Сьогодні:</b> ${works ? "Працює" : "Вихідний"}
-            <span class="${warnClass}">${fmtDateUA(today)}</span>
-          </div>
-          <div class="infoRow">
-            <b>Графік сьогодні:</b> ${graphToday}
-          </div>
-          <div class="infoRow">
-            <b>Наступне перемикання графіка:</b> ${ns ? fmtDateUA(ns) : "—"}
-            <span class="${warnClass}">залишилось: ${warnText}</span>
-          </div>
+          <div class="infoRow"><b>Сьогодні:</b> ${works ? "Працює" : "Вихідний"} <span class="${warnClass}">${fmtDateUA(today)}</span></div>
+          <div class="infoRow"><b>Графік:</b> ${gToday}</div>
+          <div class="infoRow"><b>Перехід:</b> ${ns ? fmtDateUA(ns) : "—"} <span class="${warnClass}">${left !== null ? `залишилось ${left} дн.` : ""}</span></div>
         </div>
       `);
     });
+  }
+
+  // ===== Ячейка =====
+  function graphBadgeTextForDay(date){
+    // Пишемо графік ТІЛЬКИ за основного інженера і тільки якщо вибрані відповідні кнопки графіків
+    if (!primary) return null;
+    if (selectedGraphs.size === 0) return null;
+
+    const g = graphOnDate(primary, date);
+    if (selectedGraphs.has(g)) return g;
+    return null;
   }
 
   function dayCell(date, muted){
@@ -546,56 +440,38 @@
     el.className = "day" + (muted ? " muted" : "");
 
     const now = new Date();
-    const isToday =
-      date.getFullYear()===now.getFullYear() &&
-      date.getMonth()===now.getMonth() &&
-      date.getDate()===now.getDate();
+    const isToday = date.getFullYear()===now.getFullYear() && date.getMonth()===now.getMonth() && date.getDate()===now.getDate();
     if (isToday) el.classList.add("today");
 
-    const ring = ringForDay(date);
-    if (ring) el.classList.add("hasSnake");
-
-    // бейджики графіків (тільки якщо увімкнено)
-    const badges = [];
-    if (primary){
-      const g = graphOnDate(primary, date);
-      if (shouldShowGraphLabel(g)){
-        badges.push({ color: personById(primary).color, text: g });
-      }
-    }
-    if (mateMode && mate){
-      const g2 = graphOnDate(mate, date);
-      // щоб не було шуму — показуємо тільки якщо в цей день працює напарник (або якщо працює пара 50/50)
-      const mateWorks = isWorkingOnDate(mate, date);
-      const bothWork = primary && isWorkingOnDate(primary, date) && mateWorks;
-      if ((mateWorks || bothWork) && shouldShowGraphLabel(g2)){
-        badges.push({ color: personById(mate).color, text: g2 });
-      }
+    // primary заливка тільки в робочі дні primary
+    let fillBg = "transparent";
+    let primaryWork = false;
+    if (primary && isWorkingOnDate(primary, date)){
+      primaryWork = true;
+      fillBg = personById(primary).fill;
+      el.classList.add("primaryWork");
     }
 
-    const ringBg = ring ? ring.bg : "conic-gradient(from 0deg, transparent, transparent)";
-    const barBg  = ring ? ring.barColor : "transparent";
+    // mate смуга зліва тільки якщо mate працює
+    let mateStripeBg = "transparent";
+    if (mateMode && mate && isWorkingOnDate(mate, date)){
+      mateStripeBg = personById(mate).color;
+      el.classList.add("mateWork");
+    }
+
+    const gText = graphBadgeTextForDay(date);
 
     el.innerHTML = `
-      <div class="snake" style="background:${ringBg}"></div>
-      <div class="bar" style="background:${barBg}"></div>
-      <div class="dayInner">
-        ${isToday ? `<div class="todayTag">СЬОГОДНІ</div>` : ``}
-        <div class="num">${date.getDate()}</div>
-        ${badges.length ? `
-          <div class="badges">
-            ${badges.slice(0,2).map(b => `
-              <span class="badge">
-                <span class="miniDot" style="background:${b.color}"></span>${b.text}
-              </span>
-            `).join("")}
-          </div>
-        ` : ``}
-      </div>
+      <div class="fill" style="background:${fillBg}"></div>
+      <div class="mateStripe" style="background:${mateStripeBg}"></div>
+      ${isToday ? `<div class="todayTag">СЬОГОДНІ</div>` : ``}
+      <div class="num">${date.getDate()}</div>
+      ${gText ? `<div class="gBadge">${gText}</div>` : ``}
     `;
     return el;
   }
 
+  // ===== Calendar render =====
   function renderCalendar(){
     monthTitleEl.textContent = `Місяць: ${fmtMonthUA(shown)}`;
 
@@ -610,7 +486,6 @@
 
     const y = shown.getFullYear();
     const m = shown.getMonth();
-
     const first = new Date(y, m, 1);
     const startDow = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(y, m+1, 0).getDate();
@@ -642,14 +517,12 @@
   function renderAll(){
     renderPrimaryButtons();
     renderMateUI();
+    renderGraphButtons();
     renderInfo();
     renderCalendar();
   }
 
   renderAll();
-
-  // Якщо хочеш, щоб "СЬОГОДНІ" перемикалось в північ без перезавантаження:
-  // setInterval(renderAll, 60 * 1000);
 </script>
 </body>
 </html>
