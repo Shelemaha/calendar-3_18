@@ -154,24 +154,24 @@
       background:#fff;
       border-color:#fff;
     }
-    /* 1 день — червоним */
+    /* 1 день — янтарним */
     .warn.urgent{
-  color:#0b0f14;
-  background: rgba(255, 179, 0, .95);
-  border-color: rgba(255, 179, 0, .95);
-}
+      color:#0b0f14;
+      background: rgba(255, 179, 0, .95);
+      border-color: rgba(255, 179, 0, .95);
+    }
+    .urgentText{
+      margin-top:8px;
+      font-size:12px;
+      font-weight:900;
+      color:#0b0f14;
+      background: rgba(255, 179, 0, .16);
+      border: 1px solid rgba(255, 179, 0, .45);
+      padding:8px 10px;
+      border-radius:12px;
+      line-height:1.25;
+    }
 
-.urgentText{
-  margin-top:8px;
-  font-size:12px;
-  font-weight:900;
-  color:#0b0f14;
-  background: rgba(255, 179, 0, .16);
-  border: 1px solid rgba(255, 179, 0, .45);
-  padding:8px 10px;
-  border-radius:12px;
-  line-height:1.25;
-}
     .sectionTitle{
       margin-top:12px;
       font-size:12px;
@@ -418,7 +418,6 @@
     const today = new Date();
 
     if (!primary){
-      // короткий hint
       if (selectedGraphs.size > 0) hintEl.textContent = "Показано графіки.";
       else hintEl.textContent = "Обери інженера або графік.";
       return;
@@ -433,7 +432,7 @@
     const ns = nextSwitchDate(primary, today);
     const left = ns ? daysBetween(today, ns) : null;
 
-    // 2 дні -> білим, 1 день -> червоним
+    // 2 дні -> білим, 1 день -> янтарним
     let warnClass = "warn";
     if (left === 2) warnClass = "warn soon";
     if (left === 1) warnClass = "warn urgent";
