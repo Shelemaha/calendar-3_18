@@ -10,9 +10,10 @@
       --muted:#9ab0c8;
       --line:rgba(255,255,255,.12);
 
-      --c1:#6ea8ff; --c1f:rgba(110,168,255,.22);
-      --c2:#62f0a8; --c2f:rgba(98,240,168,.20);
-      --c3:#ffb45e; --c3f:rgba(255,180,94,.20);
+      /* ЯСКРАВІШІ КОЛЬОРИ */
+      --c1:#4F9DFF; --c1f:rgba(79,157,255,.30);
+      --c2:#2EE59D; --c2f:rgba(46,229,157,.26);
+      --c3:#FFA234; --c3f:rgba(255,162,52,.26);
 
       --radius:16px;
     }
@@ -20,9 +21,9 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      background: radial-gradient(1100px 700px at 20% 0%, rgba(110,168,255,.12), transparent 60%),
-                  radial-gradient(900px 600px at 80% 20%, rgba(98,240,168,.10), transparent 55%),
-                  radial-gradient(900px 600px at 80% 80%, rgba(255,180,94,.08), transparent 55%),
+      background: radial-gradient(1100px 700px at 20% 0%, rgba(79,157,255,.14), transparent 60%),
+                  radial-gradient(900px 600px at 80% 20%, rgba(46,229,157,.12), transparent 55%),
+                  radial-gradient(900px 600px at 80% 80%, rgba(255,162,52,.10), transparent 55%),
                   linear-gradient(180deg,#0b0f14,#070a0f);
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -78,17 +79,15 @@
       overflow:hidden;
     }
     .day.muted{opacity:.48}
+
+    /* СЬОГОДНІ: без текста, просто сильнее выделение */
     .day.today{
       border:2px solid rgba(255,255,255,.92);
       background: rgba(255,255,255,.06);
     }
-    .todayTag{
-      position:absolute;right:10px;top:10px;
-      font-size:10px;font-weight:900;
-      letter-spacing:.08em;
-      color:#0b0f14;
-      background:#fff;
-      padding:2px 8px;border-radius:999px;
+    .day.today .num{
+      font-weight:1000;
+      font-size:16px;
     }
 
     .num{font-weight:900;font-size:14px}
@@ -114,12 +113,12 @@
       position:absolute;
       left:10px;
       bottom:10px;
-      width:32px;height:32px;
+      width:34px;height:34px;
       border-radius:999px;
       display:flex;align-items:center;justify-content:center;
       font-size:12px;font-weight:950;
       border:1px solid rgba(255,255,255,.22);
-      background: rgba(0,0,0,.28);
+      background: rgba(0,0,0,.30);
       color: var(--text);
     }
 
@@ -168,7 +167,7 @@
   <div class="top">
     <div>
       <h1>Календар змін 2/2 — 3 інженери</h1>
-      <div class="sub">Обери інженера. Напарник — смуга зліва. Графіки — кружок у даті.</div>
+      <div class="sub">Інженер: заливка. Напарник: смуга зліва. Графіки: кружок у даті.</div>
     </div>
     <div class="nav">
       <button class="btn" id="prev">← Місяць</button>
@@ -194,7 +193,7 @@
       <div class="infoBlock" id="info"></div>
 
       <div style="height:10px"></div>
-      <div class="hint" id="hint">Нікого не обрано.</div>
+      <div class="hint" id="hint">Обери інженера або графік.</div>
     </div>
 
     <div class="card">
@@ -236,6 +235,8 @@
     return Math.floor(diff / 2);
   }
   function startOfBlock(blockIndex){ return addDays(ANCHOR, blockIndex * 2); }
+
+  // Який графік "активний" в цей 2-денний блок (працює)
   function workingGraphForBlock(blockIndex){ return (blockIndex % 2 === 0) ? "358" : "323"; }
   function toggleGraph(g){ return g === "358" ? "323" : "358"; }
 
@@ -385,53 +386,68 @@
     });
   }
 
-  // ===== Інфо =====
+  // ===== Інфо (коротко) =====
   function renderInfo(){
     infoEl.innerHTML = "";
 
-    if (!primary){
-      hintEl.textContent = "Нікого не обрано.";
-      return;
-    }
-
-    hintEl.textContent = mateMode ? "Є інженер + напарник." : "Обрано інженера.";
-
     const today = new Date();
 
-    const list = [primary];
-    if (mateMode && mate) list.push(mate);
-
-    list.forEach(id => {
-      const p = personById(id);
-      const works = isWorkingOnDate(id, today);
-      const gToday = graphOnDate(id, today);
-
-      const ns = nextSwitchDate(id, today);
+    // Если инженер выбран — показываем подсказку по переходу
+    if (primary){
+      const p = personById(primary);
+      const works = isWorkingOnDate(primary, today);
+      const gToday = graphOnDate(primary, today);
+      const ns = nextSwitchDate(primary, today);
       const left = ns ? daysBetween(today, ns) : null;
-
       const warnClass = (left !== null && left <= 2) ? "warn soon" : "warn";
 
       infoEl.insertAdjacentHTML("beforeend", `
         <div class="infoCard">
-          <div class="infoTitle">
-            <span class="dot" style="background:${p.color}"></span>${p.name}
-          </div>
-          <div class="infoRow"><b>Сьогодні:</b> ${works ? "Працює" : "Вихідний"} <span class="${warnClass}">${fmtDateUA(today)}</span></div>
-          <div class="infoRow"><b>Графік:</b> ${gToday}</div>
-          <div class="infoRow"><b>Перехід:</b> ${ns ? fmtDateUA(ns) : "—"} <span class="${warnClass}">${left !== null ? `залишилось ${left} дн.` : ""}</span></div>
+          <div class="infoTitle"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
+          <div class="infoRow"><b>Сьогодні:</b> ${works ? "працює" : "вихідний"} <span class="${warnClass}">${gToday}</span></div>
+          <div class="infoRow"><b>Перехід:</b> ${ns ? fmtDateUA(ns) : "—"} <span class="${warnClass}">${left !== null ? `${left} дн.` : ""}</span></div>
         </div>
       `);
-    });
+
+      // если выбран напарник — тоже коротко
+      if (mateMode && mate){
+        const m = personById(mate);
+        const worksM = isWorkingOnDate(mate, today);
+        const gTodayM = graphOnDate(mate, today);
+        const nsM = nextSwitchDate(mate, today);
+        const leftM = nsM ? daysBetween(today, nsM) : null;
+        const warnClassM = (leftM !== null && leftM <= 2) ? "warn soon" : "warn";
+
+        infoEl.insertAdjacentHTML("beforeend", `
+          <div class="infoCard">
+            <div class="infoTitle"><span class="dot" style="background:${m.color}"></span>${m.name}</div>
+            <div class="infoRow"><b>Сьогодні:</b> ${worksM ? "працює" : "вихідний"} <span class="${warnClassM}">${gTodayM}</span></div>
+            <div class="infoRow"><b>Перехід:</b> ${nsM ? fmtDateUA(nsM) : "—"} <span class="${warnClassM}">${leftM !== null ? `${leftM} дн.` : ""}</span></div>
+          </div>
+        `);
+      }
+    }
+
+    // Hint — максимально коротко
+    if (!primary && selectedGraphs.size === 0){
+      hintEl.textContent = "Обери інженера або графік.";
+    } else if (!primary && selectedGraphs.size > 0){
+      hintEl.textContent = "Показано графіки.";
+    } else if (primary && !mateMode){
+      hintEl.textContent = "Інженер обраний.";
+    } else if (primary && mateMode){
+      hintEl.textContent = "Інженер + напарник.";
+    }
   }
 
   // ===== Ячейка =====
   function graphBadgeTextForDay(date){
-    // Пишемо графік ТІЛЬКИ за основного інженера і тільки якщо вибрані відповідні кнопки графіків
-    if (!primary) return null;
+    // График показываем независимо от инженера:
+    // показываем только те дни, где активен выбранный график (по блоку)
     if (selectedGraphs.size === 0) return null;
-
-    const g = graphOnDate(primary, date);
-    if (selectedGraphs.has(g)) return g;
+    const bi = blockIndexForDate(date);
+    const active = workingGraphForBlock(bi); // "358" или "323" (какой график "работает" в этот блок)
+    if (selectedGraphs.has(active)) return active;
     return null;
   }
 
@@ -443,16 +459,14 @@
     const isToday = date.getFullYear()===now.getFullYear() && date.getMonth()===now.getMonth() && date.getDate()===now.getDate();
     if (isToday) el.classList.add("today");
 
-    // primary заливка тільки в робочі дні primary
+    // primary заливка только если primary выбран и он работает
     let fillBg = "transparent";
-    let primaryWork = false;
     if (primary && isWorkingOnDate(primary, date)){
-      primaryWork = true;
       fillBg = personById(primary).fill;
       el.classList.add("primaryWork");
     }
 
-    // mate смуга зліва тільки якщо mate працює
+    // mate полоса слева только если mate выбран и работает
     let mateStripeBg = "transparent";
     if (mateMode && mate && isWorkingOnDate(mate, date)){
       mateStripeBg = personById(mate).color;
@@ -464,7 +478,6 @@
     el.innerHTML = `
       <div class="fill" style="background:${fillBg}"></div>
       <div class="mateStripe" style="background:${mateStripeBg}"></div>
-      ${isToday ? `<div class="todayTag">СЬОГОДНІ</div>` : ``}
       <div class="num">${date.getDate()}</div>
       ${gText ? `<div class="gBadge">${gText}</div>` : ``}
     `;
@@ -513,6 +526,8 @@
     shown = new Date(shown.getFullYear(), shown.getMonth()+1, 1);
     renderAll();
   };
+
+  mateToggleEl.onclick = toggleMateMode;
 
   function renderAll(){
     renderPrimaryButtons();
