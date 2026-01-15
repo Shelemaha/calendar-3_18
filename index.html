@@ -10,10 +10,12 @@
       --muted:#9ab0c8;
       --line:rgba(255,255,255,.12);
 
-      /* ЯСКРАВІШІ КОЛЬОРИ */
+      /* Яскравіші кольори */
       --c1:#4F9DFF; --c1f:rgba(79,157,255,.30);
       --c2:#2EE59D; --c2f:rgba(46,229,157,.26);
-      --c3:#FFA234; --c3f:rgba(255,162,52,.26);
+
+      /* Інженер 3 — томатний */
+      --c3:#FF3B30; --c3f:rgba(255,59,48,.26);
 
       --radius:16px;
     }
@@ -23,7 +25,7 @@
       margin:0;
       background: radial-gradient(1100px 700px at 20% 0%, rgba(79,157,255,.14), transparent 60%),
                   radial-gradient(900px 600px at 80% 20%, rgba(46,229,157,.12), transparent 55%),
-                  radial-gradient(900px 600px at 80% 80%, rgba(255,162,52,.10), transparent 55%),
+                  radial-gradient(900px 600px at 80% 80%, rgba(255,59,48,.10), transparent 55%),
                   linear-gradient(180deg,#0b0f14,#070a0f);
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -80,7 +82,7 @@
     }
     .day.muted{opacity:.48}
 
-    /* СЬОГОДНІ: без текста, просто сильнее выделение */
+    /* Сьогодні: тільки рамка + жирніше число */
     .day.today{
       border:2px solid rgba(255,255,255,.92);
       background: rgba(255,255,255,.06);
@@ -133,6 +135,7 @@
     }
     .infoTitle{display:flex;gap:8px;align-items:center;font-weight:950}
     .infoRow{margin-top:6px;font-size:13px}
+
     .warn{
       display:inline-block;
       margin-left:6px;
@@ -145,10 +148,28 @@
       color: var(--muted);
       vertical-align:middle;
     }
+    /* 2 дні — білим */
     .warn.soon{
       color:#0b0f14;
       background:#fff;
       border-color:#fff;
+    }
+    /* 1 день — червоним */
+    .warn.urgent{
+      color:#fff;
+      background: rgba(255,59,48,.95);
+      border-color: rgba(255,59,48,.95);
+    }
+    .urgentText{
+      margin-top:8px;
+      font-size:12px;
+      font-weight:900;
+      color:#fff;
+      background: rgba(255,59,48,.18);
+      border: 1px solid rgba(255,59,48,.45);
+      padding:8px 10px;
+      border-radius:12px;
+      line-height:1.25;
     }
 
     .sectionTitle{
@@ -214,7 +235,7 @@
   // ===== Графіки =====
   const GRAPHS = ["358","323"];
 
-  // Якір: 15–16.01.2026 як у твоєму прикладі
+  // Якір: 15–16.01.2026 як у прикладі
   const ANCHOR = new Date(2026, 0, 15);
 
   // Початкові графіки на старті якоря
@@ -270,11 +291,15 @@
     return graphOnDate(personId, date) === workingGraphForBlock(bi);
   }
 
+  // Наступне перемикання — строго в майбутньому (0 днів не буде)
   function nextSwitchDate(personId, fromDate){
     const currentBlock = blockIndexForDate(fromDate);
     for (let b = currentBlock; b < currentBlock + 2000; b++){
       const sw = SWITCH_ORDER[(((b % 3) + 3) % 3)];
-      if (sw === personId) return startOfBlock(b + 1);
+      if (sw === personId){
+        const candidate = startOfBlock(b + 1);
+        if (daysBetween(fromDate, candidate) > 0) return candidate; // строго > сьогодні
+      }
     }
     return null;
   }
@@ -386,71 +411,59 @@
     });
   }
 
-  // ===== Інфо (коротко) =====
+  // ===== Інфо (тільки про основного інженера) =====
   function renderInfo(){
     infoEl.innerHTML = "";
 
     const today = new Date();
 
-    // Если инженер выбран — показываем подсказку по переходу
-    if (primary){
-      const p = personById(primary);
-      const works = isWorkingOnDate(primary, today);
-      const gToday = graphOnDate(primary, today);
-      const ns = nextSwitchDate(primary, today);
-      const left = ns ? daysBetween(today, ns) : null;
-      const warnClass = (left !== null && left <= 2) ? "warn soon" : "warn";
+    if (!primary){
+      // короткий hint
+      if (selectedGraphs.size > 0) hintEl.textContent = "Показано графіки.";
+      else hintEl.textContent = "Обери інженера або графік.";
+      return;
+    }
 
-      infoEl.insertAdjacentHTML("beforeend", `
-        <div class="infoCard">
-          <div class="infoTitle"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
-          <div class="infoRow"><b>Сьогодні:</b> ${works ? "працює" : "вихідний"} <span class="${warnClass}">${gToday}</span></div>
-          <div class="infoRow"><b>Перехід:</b> ${ns ? fmtDateUA(ns) : "—"} <span class="${warnClass}">${left !== null ? `${left} дн.` : ""}</span></div>
-        </div>
-      `);
+    hintEl.textContent = mateMode ? "Інженер + напарник." : "Інженер обраний.";
 
-      // если выбран напарник — тоже коротко
-      if (mateMode && mate){
-        const m = personById(mate);
-        const worksM = isWorkingOnDate(mate, today);
-        const gTodayM = graphOnDate(mate, today);
-        const nsM = nextSwitchDate(mate, today);
-        const leftM = nsM ? daysBetween(today, nsM) : null;
-        const warnClassM = (leftM !== null && leftM <= 2) ? "warn soon" : "warn";
+    const p = personById(primary);
+    const works = isWorkingOnDate(primary, today);
+    const gToday = graphOnDate(primary, today);
 
-        infoEl.insertAdjacentHTML("beforeend", `
-          <div class="infoCard">
-            <div class="infoTitle"><span class="dot" style="background:${m.color}"></span>${m.name}</div>
-            <div class="infoRow"><b>Сьогодні:</b> ${worksM ? "працює" : "вихідний"} <span class="${warnClassM}">${gTodayM}</span></div>
-            <div class="infoRow"><b>Перехід:</b> ${nsM ? fmtDateUA(nsM) : "—"} <span class="${warnClassM}">${leftM !== null ? `${leftM} дн.` : ""}</span></div>
+    const ns = nextSwitchDate(primary, today);
+    const left = ns ? daysBetween(today, ns) : null;
+
+    // 2 дні -> білим, 1 день -> червоним
+    let warnClass = "warn";
+    if (left === 2) warnClass = "warn soon";
+    if (left === 1) warnClass = "warn urgent";
+
+    const targetGraph = toggleGraph(gToday); // на який переходить
+
+    infoEl.insertAdjacentHTML("beforeend", `
+      <div class="infoCard">
+        <div class="infoTitle"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
+        <div class="infoRow"><b>Сьогодні:</b> ${works ? "працює" : "вихідний"} <span class="${warnClass}">${gToday}</span></div>
+        <div class="infoRow"><b>Перехід:</b> ${ns ? fmtDateUA(ns) : "—"} <span class="${warnClass}">${left !== null ? `${left} дн.` : ""}</span></div>
+        ${left === 1 ? `
+          <div class="urgentText">
+            Не забудь написати СЗ на зміну графіка на (${targetGraph}): завтра перехід графіка.
           </div>
-        `);
-      }
-    }
-
-    // Hint — максимально коротко
-    if (!primary && selectedGraphs.size === 0){
-      hintEl.textContent = "Обери інженера або графік.";
-    } else if (!primary && selectedGraphs.size > 0){
-      hintEl.textContent = "Показано графіки.";
-    } else if (primary && !mateMode){
-      hintEl.textContent = "Інженер обраний.";
-    } else if (primary && mateMode){
-      hintEl.textContent = "Інженер + напарник.";
-    }
+        ` : ``}
+      </div>
+    `);
   }
 
-  // ===== Ячейка =====
+  // ===== Графік у кружку (незалежно від інженера) =====
   function graphBadgeTextForDay(date){
-    // График показываем независимо от инженера:
-    // показываем только те дни, где активен выбранный график (по блоку)
     if (selectedGraphs.size === 0) return null;
     const bi = blockIndexForDate(date);
-    const active = workingGraphForBlock(bi); // "358" или "323" (какой график "работает" в этот блок)
+    const active = workingGraphForBlock(bi); // який графік працює у цей 2-денний блок
     if (selectedGraphs.has(active)) return active;
     return null;
   }
 
+  // ===== Ячейка =====
   function dayCell(date, muted){
     const el = document.createElement("div");
     el.className = "day" + (muted ? " muted" : "");
