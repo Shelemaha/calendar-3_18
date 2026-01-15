@@ -10,12 +10,12 @@
       --muted:#9ab0c8;
       --line:rgba(255,255,255,.12);
 
-      /* Яскравіші кольори */
+      /* Яскравіші кольори інженерів */
       --c1:#4F9DFF; --c1f:rgba(79,157,255,.30);
       --c2:#2EE59D; --c2f:rgba(46,229,157,.26);
 
-      /* Інженер 3 — томатний */
-      --c3:#FF3B30; --c3f:rgba(255,59,48,.26);
+      /* Інженер 3 — янтарний */
+      --c3:#FFB300; --c3f:rgba(255,179,0,.26);
 
       --radius:16px;
     }
@@ -25,7 +25,7 @@
       margin:0;
       background: radial-gradient(1100px 700px at 20% 0%, rgba(79,157,255,.14), transparent 60%),
                   radial-gradient(900px 600px at 80% 20%, rgba(46,229,157,.12), transparent 55%),
-                  radial-gradient(900px 600px at 80% 80%, rgba(255,59,48,.10), transparent 55%),
+                  radial-gradient(900px 600px at 80% 80%, rgba(255,179,0,.10), transparent 55%),
                   linear-gradient(180deg,#0b0f14,#070a0f);
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -154,19 +154,19 @@
       background:#fff;
       border-color:#fff;
     }
-    /* 1 день — янтарним */
+    /* 1 день — ЧЕРВОНИМ (залишаємо) */
     .warn.urgent{
-      color:#0b0f14;
-      background: rgba(255, 179, 0, .95);
-      border-color: rgba(255, 179, 0, .95);
+      color:#fff;
+      background: rgba(255,59,48,.95);
+      border-color: rgba(255,59,48,.95);
     }
     .urgentText{
       margin-top:8px;
       font-size:12px;
       font-weight:900;
-      color:#0b0f14;
-      background: rgba(255, 179, 0, .16);
-      border: 1px solid rgba(255, 179, 0, .45);
+      color:#fff;
+      background: rgba(255,59,48,.18);
+      border: 1px solid rgba(255,59,48,.45);
       padding:8px 10px;
       border-radius:12px;
       line-height:1.25;
@@ -432,7 +432,7 @@
     const ns = nextSwitchDate(primary, today);
     const left = ns ? daysBetween(today, ns) : null;
 
-    // 2 дні -> білим, 1 день -> янтарним
+    // 2 дні -> білим, 1 день -> червоним
     let warnClass = "warn";
     if (left === 2) warnClass = "warn soon";
     if (left === 1) warnClass = "warn urgent";
