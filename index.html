@@ -3,19 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Календар змін 2/2 — 3 інженери</title>
+  <title>Графік чергувань</title>
   <style>
     :root{
       --text:#e9f0f7;
       --muted:#9ab0c8;
       --line:rgba(255,255,255,.12);
 
-      /* Яскравіші кольори інженерів */
-      --c1:#4F9DFF; --c1f:rgba(79,157,255,.30);
-      --c2:#2EE59D; --c2f:rgba(46,229,157,.34);
-
-      /* Інженер 3 — янтарний */
-      --c3:#FFEB3B; --c3f:rgba(255,193,7,.28);
+      /* ЯСКРАВІШІ кольори інженерів */
+      --c1:#2F7DFF; --c1f:rgba(47,125,255,.38);   /* синій яскравіше */
+      --c2:#00E676; --c2f:rgba(0,230,118,.32);    /* зелений неончик */
+      --c3:#FFEB3B; --c3f:rgba(255,193,7,.30);    /* інж 3: лимонний, заливка “золота” */
 
       --radius:16px;
     }
@@ -23,9 +21,9 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      background: radial-gradient(1100px 700px at 20% 0%, rgba(79,157,255,.14), transparent 60%),
-                  radial-gradient(900px 600px at 80% 20%, rgba(46,229,157,.12), transparent 55%),
-                  radial-gradient(900px 600px at 80% 80%, rgba(255,179,0,.10), transparent 55%),
+      background: radial-gradient(1100px 700px at 20% 0%, rgba(47,125,255,.14), transparent 60%),
+                  radial-gradient(900px 600px at 80% 20%, rgba(0,230,118,.12), transparent 55%),
+                  radial-gradient(900px 600px at 80% 80%, rgba(255,193,7,.10), transparent 55%),
                   linear-gradient(180deg,#0b0f14,#070a0f);
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -124,8 +122,6 @@
       color: var(--text);
     }
 
-    .hint{font-size:13px;color:var(--muted);line-height:1.35}
-
     .infoBlock{display:grid;gap:10px;margin-top:12px}
     .infoCard{
       border:1px solid var(--line);
@@ -154,7 +150,7 @@
       background:#fff;
       border-color:#fff;
     }
-    /* 1 день — ЧЕРВОНИМ (залишаємо) */
+    /* 1 день — червоним */
     .warn.urgent{
       color:#fff;
       background: rgba(255,59,48,.95);
@@ -187,8 +183,8 @@
 <div class="wrap">
   <div class="top">
     <div>
-      <h1>Календар змін 2/2 — 3 інженери</h1>
-      <div class="sub">Інженер: заливка. Напарник: смуга зліва. Графіки: кружок у даті.</div>
+      <h1>Графік чергувань</h1>
+      <div class="sub">Графік: 4/2</div>
     </div>
     <div class="nav">
       <button class="btn" id="prev">← Місяць</button>
@@ -198,23 +194,20 @@
 
   <div class="grid">
     <div class="card">
-      <div class="sectionTitle">Інженер</div>
+      <div class="sectionTitle">⚡ Інженери</div>
       <div class="controls" id="primaryBtns"></div>
 
       <div style="height:10px"></div>
 
       <div class="controls">
-        <button class="btn" id="mateToggle" disabled>Напарник</button>
+        <button class="btn" id="mateToggle" disabled>🦸‍♂️ Напарник</button>
       </div>
       <div class="controls" id="mateBtns" style="display:none;margin-top:10px"></div>
 
-      <div class="sectionTitle">Графіки</div>
+      <div class="sectionTitle">📌 Графіки</div>
       <div class="controls" id="graphBtns"></div>
 
       <div class="infoBlock" id="info"></div>
-
-      <div style="height:10px"></div>
-      <div class="hint" id="hint">Обери інженера або графік.</div>
     </div>
 
     <div class="card">
@@ -325,7 +318,6 @@
   const mateToggleEl = document.getElementById("mateToggle");
   const mateBtnsEl = document.getElementById("mateBtns");
   const infoEl = document.getElementById("info");
-  const hintEl = document.getElementById("hint");
   const graphBtnsEl = document.getElementById("graphBtns");
 
   function personById(id){ return PEOPLE.find(p => p.id === id); }
@@ -414,16 +406,9 @@
   // ===== Інфо (тільки про основного інженера) =====
   function renderInfo(){
     infoEl.innerHTML = "";
-
     const today = new Date();
 
-    if (!primary){
-      if (selectedGraphs.size > 0) hintEl.textContent = "Показано графіки.";
-      else hintEl.textContent = "Обери інженера або графік.";
-      return;
-    }
-
-    hintEl.textContent = mateMode ? "Інженер + напарник." : "Інженер обраний.";
+    if (!primary) return;
 
     const p = personById(primary);
     const works = isWorkingOnDate(primary, today);
@@ -432,12 +417,11 @@
     const ns = nextSwitchDate(primary, today);
     const left = ns ? daysBetween(today, ns) : null;
 
-    // 2 дні -> білим, 1 день -> червоним
     let warnClass = "warn";
     if (left === 2) warnClass = "warn soon";
     if (left === 1) warnClass = "warn urgent";
 
-    const targetGraph = toggleGraph(gToday); // на який переходить
+    const targetGraph = toggleGraph(gToday);
 
     infoEl.insertAdjacentHTML("beforeend", `
       <div class="infoCard">
@@ -446,7 +430,7 @@
         <div class="infoRow"><b>Перехід:</b> ${ns ? fmtDateUA(ns) : "—"} <span class="${warnClass}">${left !== null ? `${left} дн.` : ""}</span></div>
         ${left === 1 ? `
           <div class="urgentText">
-            Не забудь написати СЗ на зміну графіка на (${targetGraph}): завтра перехід графіка.
+            Не забудь написати СЗ на зміну графіка на ${targetGraph}: завтра перехід графіка.
           </div>
         ` : ``}
       </div>
@@ -457,7 +441,7 @@
   function graphBadgeTextForDay(date){
     if (selectedGraphs.size === 0) return null;
     const bi = blockIndexForDate(date);
-    const active = workingGraphForBlock(bi); // який графік працює у цей 2-денний блок
+    const active = workingGraphForBlock(bi);
     if (selectedGraphs.has(active)) return active;
     return null;
   }
@@ -471,14 +455,12 @@
     const isToday = date.getFullYear()===now.getFullYear() && date.getMonth()===now.getMonth() && date.getDate()===now.getDate();
     if (isToday) el.classList.add("today");
 
-    // primary заливка только если primary выбран и он работает
     let fillBg = "transparent";
     if (primary && isWorkingOnDate(primary, date)){
       fillBg = personById(primary).fill;
       el.classList.add("primaryWork");
     }
 
-    // mate полоса слева только если mate выбран и работает
     let mateStripeBg = "transparent";
     if (mateMode && mate && isWorkingOnDate(mate, date)){
       mateStripeBg = personById(mate).color;
